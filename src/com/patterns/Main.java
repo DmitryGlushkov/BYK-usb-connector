@@ -13,7 +13,7 @@ public class Main {
 
     //public static byte BELL = Byte.parseByte("7");
 
-    private final static int FMT = 0, RAW = 1;
+
 
     /*public interface BycUsbComDll extends Library {
 
@@ -86,32 +86,9 @@ public class Main {
         System.out.println(new String(res_b));
     }
 
-    private static byte[] byteCommand(int handler, int cmdBytes) {
-        int[] written = new int[1];
-        int maxResult = 2000;
-        byte[] res_b = new byte[maxResult];
-        int[] cmd = new int[]{cmdBytes, 0};
-        DLL.BYKCom_RawCommand(handler, cmd, 5, res_b, maxResult, written);
-        byte[] result = Arrays.copyOf(res_b, written[0]);
-        return result;
-    }*/
+    */
 
-    /*private static void command(int handler, String command, int type) throws Exception {
-
-        int[] written = new int[1];
-        int maxResult = 2000;
-        byte[] res_b = new byte[maxResult];
-
-        byte[] cmd = command.getBytes(  );
-
-        if(type == FMT)
-            DLL.BYKCom_FmtCommand(handler, cmd, cmd.length, res_b, maxResult, written);
-        else if(type == RAW)
-            DLL.BYKCom_RawCommand(handler, cmd, cmd.length, res_b, maxResult, written);
-
-        System.out.println(Arrays.toString(res_b));
-        System.out.println(new String(res_b));
-        System.out.println(String.format("Written: %s", written[0]));
+    /*
 
     }
 

@@ -1,5 +1,6 @@
 package com.byk.usbconnector.gui;
 
+import com.byk.usbconnector.FileManager;
 import com.byk.usbconnector.dll.Connector;
 import com.byk.usbconnector.models.Device;
 
@@ -10,12 +11,13 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.*;
+import java.util.List;
 
 public class GuiManager {
 
     private ResourceBundle labels = ResourceBundle.getBundle("labels");
     private Device device = null;
-    private JButton btnConnect;
+    private JButton btnConnect, btnGetData;
 
     public void show() {
 
@@ -26,7 +28,7 @@ public class GuiManager {
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                Connector.close();
+                disconnect();
             }
         });
 
@@ -38,25 +40,30 @@ public class GuiManager {
 
         initWidgets(mainContainer);
 
-
-
-
         frame.pack();
         frame.setVisible(true);
 
+        setBtnConnectState();
+
     }
+
+    private void disconnect() {
+        Connector.close();
+        device = null;
+        tableModel.fireTableDataChanged();
+    }
+
 
     private void initWidgets(final Container container) {
         GridBagConstraints c = new GridBagConstraints();
 
         // label
-        JLabel lblLoad = new JLabel("Devise:");
+        JLabel lblLoad = new JLabel("Deviсe:");
         c.anchor = GridBagConstraints.NORTHWEST;
         c.insets = new Insets(5, 5, 5, 5);
         c.gridx = 0;
         c.gridy = 0;
         container.add(lblLoad, c);
-
 
         // btn. Load
         btnConnect = new JButton("Connect");
@@ -69,10 +76,19 @@ public class GuiManager {
         JTable devicesTable = new JTable(tableModel);
         c.gridy++;
         container.add(devicesTable, c);
+
+        // btn. GetData
+        btnGetData = new JButton("Get Data");
+        btnGetData.setActionCommand("get_data");
+        btnGetData.addActionListener(buttonListener);
+        c.gridy++;
+        container.add(btnGetData, c);
+
     }
 
     private void setBtnConnectState() {
         btnConnect.setEnabled(!Connector.isConnected());
+        btnGetData.setEnabled(Connector.isConnected());
     }
 
     private DefaultTableModel tableModel = new DefaultTableModel() {
@@ -131,9 +147,23 @@ public class GuiManager {
         switch (e.getActionCommand()) {
             case "connect":
                 device = Connector.getDevice();
-                Connector.open(device);
-                tableModel.fireTableDataChanged();
+                if (device != null) {
+                    Connector.open(device);
+                    tableModel.fireTableDataChanged();
+                } else {
+                    JOptionPane.showMessageDialog(btnConnect.getParent(), "Нет подключенных устройств");
+                }
                 setBtnConnectState();
+                break;
+            case "get_data":
+                if (Connector.isConnected() && device != null) {
+                    int slot = 3;
+                    List<byte[]> rawData = Connector.readDataFromSlot(slot);
+                    FileManager.writeToFile(rawData, slot);
+                    System.out.println(1);
+                } else {
+                    JOptionPane.showMessageDialog(btnConnect.getParent(), "Нет подключенных устройств");
+                }
                 break;
         }
     };
