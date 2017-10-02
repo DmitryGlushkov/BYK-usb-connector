@@ -4,6 +4,8 @@ import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class FileManager {
@@ -24,6 +26,11 @@ public class FileManager {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
 
+    public static List<File> getFiles() {
+        final File[] filesArray = new File(DIR).listFiles();
+        if (filesArray != null) return Arrays.asList(filesArray);
+        else return Collections.emptyList();
     }
 }

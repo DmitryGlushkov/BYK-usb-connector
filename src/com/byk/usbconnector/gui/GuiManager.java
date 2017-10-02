@@ -7,9 +7,8 @@ import com.byk.usbconnector.models.Device;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -18,6 +17,9 @@ public class GuiManager {
     private ResourceBundle labels = ResourceBundle.getBundle("labels");
     private Device device = null;
     private JButton btnConnect, btnGetData;
+    private JLabel lblLoad;
+    private List<File> files = new ArrayList<>();
+    private JList<String> fileList;
 
     public void show() {
 
@@ -55,40 +57,89 @@ public class GuiManager {
 
 
     private void initWidgets(final Container container) {
-        GridBagConstraints c = new GridBagConstraints();
 
-        // label
-        JLabel lblLoad = new JLabel("Deviсe:");
+        GridBagConstraints c = new GridBagConstraints();
         c.anchor = GridBagConstraints.NORTHWEST;
         c.insets = new Insets(5, 5, 5, 5);
         c.gridx = 0;
         c.gridy = 0;
-        container.add(lblLoad, c);
+
+        JPanel leftContainer = new JPanel(new GridBagLayout());
+        JPanel rightContainer = new JPanel(new GridBagLayout());
+
+        container.add(leftContainer, c);
+        c.gridx++;
+        container.add(rightContainer, c);
+
+        // label
+        lblLoad = new JLabel("Deviсe:");
+        c.gridx = 0;
+        c.gridy = 0;
+        leftContainer.add(lblLoad, c);
 
         // btn. Load
         btnConnect = new JButton("Connect");
         btnConnect.setActionCommand("connect");
         btnConnect.addActionListener(buttonListener);
         c.gridy++;
-        container.add(btnConnect, c);
+        leftContainer.add(btnConnect, c);
 
         // table
         JTable devicesTable = new JTable(tableModel);
         c.gridy++;
-        container.add(devicesTable, c);
+        leftContainer.add(devicesTable, c);
 
         // btn. GetData
         btnGetData = new JButton("Get Data");
         btnGetData.setActionCommand("get_data");
         btnGetData.addActionListener(buttonListener);
         c.gridy++;
-        container.add(btnGetData, c);
+        leftContainer.add(btnGetData, c);
+
+        // label "Files"
+        JLabel lblFiles = new JLabel("Files:");
+        c.gridx = 1;
+        c.gridy = 0;
+        rightContainer.add(lblFiles, c);
+
+        // files list
+        final DefaultListModel<String> listModel = new DefaultListModel<String>() {
+            @Override
+            public int getSize() {
+                return files.size();
+            }
+
+            @Override
+            public String getElementAt(int index) {
+                return files.get(index).getName();
+            }
+        };
+
+        fileList = new JList<>(listModel);
+
+        fileList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                final File file = files.get(fileList.getSelectedIndex());
+                JOptionPane.showMessageDialog(btnConnect.getParent(), file.getAbsoluteFile());
+            }
+        });
+        JScrollPane listScroller = new JScrollPane(fileList);
+        c.gridy++;
+        rightContainer.add(listScroller, c);
+        updateFiles();
 
     }
 
     private void setBtnConnectState() {
+        lblLoad.setText(String.format("Device: %s", (Connector.isConnected() ? "connected" : "disconnected")));
         btnConnect.setEnabled(!Connector.isConnected());
         btnGetData.setEnabled(Connector.isConnected());
+    }
+
+    private void updateFiles() {
+        files = FileManager.getFiles();
+        fileList.ensureIndexIsVisible(files.size());
     }
 
     private DefaultTableModel tableModel = new DefaultTableModel() {
