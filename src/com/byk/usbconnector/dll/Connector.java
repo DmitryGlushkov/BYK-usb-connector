@@ -9,8 +9,22 @@ import java.util.List;
 
 public class Connector {
 
-    private final static BykUsbComDll DLL = (BykUsbComDll) Native.loadLibrary("bykusbcom", BykUsbComDll.class);
+    private static BykUsbComDll DLL;
+
+    static {
+        try {
+            DLL = (BykUsbComDll) Native.loadLibrary("bykusbcom", BykUsbComDll.class);
+        } catch (UnsatisfiedLinkError e) {
+            DLL = new BykUsbComDllDummy();
+        }
+
+    }
+
     private static int HANDLER = -1;
+
+    public static boolean isDllLoaded() {
+        return !(DLL instanceof BykUsbComDllDummy);
+    }
 
     public static Device getDevice() {
         int[] written = new int[1];

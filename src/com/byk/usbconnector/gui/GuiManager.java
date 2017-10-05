@@ -1,6 +1,7 @@
 package com.byk.usbconnector.gui;
 
 import com.byk.usbconnector.FileManager;
+import com.byk.usbconnector.dll.ByteProcessor;
 import com.byk.usbconnector.dll.Connector;
 import com.byk.usbconnector.models.Device;
 
@@ -14,7 +15,7 @@ import java.util.List;
 
 public class GuiManager {
 
-    private ResourceBundle labels = ResourceBundle.getBundle("labels");
+    private ResourceBundle labels = ResourceBundle.getBundle("resources/labels");
     private Device device = null;
     private JButton btnConnect, btnGetData;
     private JLabel lblLoad;
@@ -46,6 +47,8 @@ public class GuiManager {
         frame.setVisible(true);
 
         setBtnConnectState();
+
+        checkDllLoaded();
 
     }
 
@@ -120,8 +123,13 @@ public class GuiManager {
         fileList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                final File file = files.get(fileList.getSelectedIndex());
-                JOptionPane.showMessageDialog(btnConnect.getParent(), file.getAbsoluteFile());
+                if(e.getClickCount() == 2){
+                    final File file = files.get(fileList.getSelectedIndex());
+                    final List<byte[]> bytes = FileManager.redFile(file);
+                    for (final byte[] bb : bytes){
+                        ByteProcessor.process___1(bb);
+                    }
+                }
             }
         });
         JScrollPane listScroller = new JScrollPane(fileList);
@@ -218,5 +226,11 @@ public class GuiManager {
                 break;
         }
     };
+
+    private void checkDllLoaded(){
+       if(! Connector.isDllLoaded()){
+           JOptionPane.showMessageDialog(btnConnect.getParent(), "bykusbcom.dll не подключена");
+       }
+    }
 
 }
