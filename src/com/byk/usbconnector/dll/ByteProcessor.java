@@ -3,54 +3,60 @@ package com.byk.usbconnector.dll;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ByteProcessor {
 
-    public static void process___1(byte[] bytes) {
+    static final int START_WAVE = 400;  // (nm)
+    static final int STEP_WAVE = 10;    // (nm)
 
-        System.out.println("raw:");
-        System.out.println(Arrays.toString(bytes));
+    public static void process___1(List<byte[]> byteList) {
 
-        // 01 make split
-        List<byte[]> split_x4 = new ArrayList<>(40);
-        for (int i = 1; i < bytes.length; i=i+5) {
-            split_x4.add(new byte[]{bytes[i], bytes[i+1], bytes[i+2], bytes[i+3]});
+
+        // setup waves
+        int W = START_WAVE;
+        int[] wave_len = new int[31];
+        for (int i = 0; i < wave_len.length; i++) {
+            wave_len[i] = W; W += STEP_WAVE;
         }
 
-        // 02 revert the split
-        List<byte[]> split_x4_rev = new ArrayList<>(split_x4.size());
-        for (byte[] bb : split_x4)split_x4_rev.add(new byte[]{bb[3], bb[2], bb[1], bb[0]});
 
-        // 03 convert
-        tryFloat(split_x4);
-        tryInts(split_x4);
-
-        //for (byte[] bb : split_x4_rev) System.out.println(Arrays.toString(bb));
-
-        System.out.println("------------------------------------------------------------------------");
+        // setup map
+        final Map<Integer, float[]> waveMap = new HashMap<>();
+        for (int len : wave_len) waveMap.put(len, new float[3]);
 
 
+        // process bytes
+        for (int j = 0; j < byteList.size(); j++) {
+            byte[] bytes = byteList.get(j);
+            if (bytes.length < 155) { System.out.println("Got empty slot. exit."); continue; }
+            // make split
+            List<byte[]> split_x4 = new ArrayList<>(31);
+            for (int i = 1; i < bytes.length; i = i + 5) {
+                split_x4.add(new byte[]{bytes[i], bytes[i + 1], bytes[i + 2], bytes[i + 3]});
+            }
+            // convert to float
+            float[] _floats = convertToFloat(split_x4);
+            // fill up map
+            for (int i = 0; i < _floats.length; i++) {
+                float f = _floats[i];
+                waveMap.get(wave_len[i])[j] = f;
+            }
+        }
+
+        System.out.println(1);
     }
 
-    private static void tryFloat(List<byte[]> split){
+    private static float[] convertToFloat(List<byte[]> split) {
         float[] f__ar = new float[split.size()];
         for (int i = 0; i < split.size(); i++) {
             f__ar[i] = ByteBuffer.wrap(split.get(i)).order(ByteOrder.LITTLE_ENDIAN).getFloat();
         }
-        System.out.println("as floats: ");
-        System.out.println(Arrays.toString(f__ar));
+        return f__ar;
     }
 
-    private static void tryInts(List<byte[]> split){
-        int[] i__ar = new int[split.size()];
-        for (int i = 0; i < split.size(); i++) {
-            i__ar[i] = ByteBuffer.wrap(split.get(i)).order(ByteOrder.LITTLE_ENDIAN).getInt();
-        }
-        System.out.println("as ints: ");
-        System.out.println(Arrays.toString(i__ar));
-    }
 
 
 }

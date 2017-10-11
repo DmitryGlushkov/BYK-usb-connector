@@ -19,7 +19,8 @@ public class GuiManager {
     private Device device = null;
     private JButton btnConnect, btnGetData;
     private JLabel lblLoad;
-    private List<File> files = new ArrayList<>();
+    private JTextField txtSlot;
+    private FileNameListModel listModel;
     private JList<String> fileList;
 
     public void show() {
@@ -93,11 +94,17 @@ public class GuiManager {
         leftContainer.add(devicesTable, c);
 
         // btn. GetData
+        JPanel btnContainer = new JPanel(new FlowLayout());
         btnGetData = new JButton("Get Data");
         btnGetData.setActionCommand("get_data");
         btnGetData.addActionListener(buttonListener);
+        btnContainer.add(btnGetData);
+
+        // txt Slot
+        txtSlot = new JTextField("1", 2);
+        btnContainer.add(txtSlot);
         c.gridy++;
-        leftContainer.add(btnGetData, c);
+        leftContainer.add(btnContainer, c);
 
         // label "Files"
         JLabel lblFiles = new JLabel("Files:");
@@ -106,48 +113,35 @@ public class GuiManager {
         rightContainer.add(lblFiles, c);
 
         // files list
-        final DefaultListModel<String> listModel = new DefaultListModel<String>() {
-            @Override
-            public int getSize() {
-                return files.size();
-            }
-
-            @Override
-            public String getElementAt(int index) {
-                return files.get(index).getName();
-            }
-        };
-
+        listModel = new FileNameListModel(new ArrayList<>(FileManager.getFiles()));
         fileList = new JList<>(listModel);
-
         fileList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if(e.getClickCount() == 2){
-                    final File file = files.get(fileList.getSelectedIndex());
-                    final List<byte[]> bytes = FileManager.redFile(file);
-                    for (final byte[] bb : bytes){
-                        ByteProcessor.process___1(bb);
-                    }
+                    final File file = listModel.getFile(fileList.getSelectedIndex());
+                    final List<byte[]> byteList = FileManager.redFile(file);
+                    ByteProcessor.process___1(byteList);
                 }
             }
         });
-        JScrollPane listScroller = new JScrollPane(fileList);
+
+        listScroller = new JScrollPane(fileList);
+
         c.gridy++;
         rightContainer.add(listScroller, c);
-        updateFiles();
+
+        fileList.ensureIndexIsVisible(listModel.size());
 
     }
+
+    JScrollPane listScroller;
 
     private void setBtnConnectState() {
         lblLoad.setText(String.format("Device: %s", (Connector.isConnected() ? "connected" : "disconnected")));
         btnConnect.setEnabled(!Connector.isConnected());
         btnGetData.setEnabled(Connector.isConnected());
-    }
-
-    private void updateFiles() {
-        files = FileManager.getFiles();
-        fileList.ensureIndexIsVisible(files.size());
+        txtSlot.setEnabled(Connector.isConnected());
     }
 
     private DefaultTableModel tableModel = new DefaultTableModel() {
@@ -216,10 +210,23 @@ public class GuiManager {
                 break;
             case "get_data":
                 if (Connector.isConnected() && device != null) {
-                    int slot = 3;
-                    List<byte[]> rawData = Connector.readDataFromSlot(slot);
-                    FileManager.writeToFile(rawData, slot);
-                    System.out.println(1);
+                    final String text = txtSlot.getText().trim();
+                    if (text.length() > 0 && text.matches("\\d")) {
+                        int slot = Integer.parseInt(text);
+                        if (slot >= 1 && slot <= 10) {
+                            List<byte[]> rawData = Connector.readDataFromSlot(slot);
+                            File file = FileManager.writeToFile(rawData, slot, listModel.size());
+                            JOptionPane.showMessageDialog(btnConnect.getParent(), String.format("Файл создан: %s", file.getName()));
+                            listModel.addFile(file);
+                            int index = listModel.size()-1;
+                            fileList.setSelectedIndex(index);
+                            fileList.ensureIndexIsVisible(index);
+                        } else {
+                            JOptionPane.showMessageDialog(btnConnect.getParent(), "Неверный номер слота (1-10)");
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(btnConnect.getParent(), "Неверный номер слота (1-10)");
+                    }
                 } else {
                     JOptionPane.showMessageDialog(btnConnect.getParent(), "Нет подключенных устройств");
                 }

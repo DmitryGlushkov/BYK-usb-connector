@@ -6,12 +6,11 @@ import java.util.*;
 
 public class FileManager {
 
-    //private static final String DIR = "G:\\BYK-files\\";
-    private static final String DIR = "D:\\downloads\\BYK-files";
+    private static final String DIR = "G:\\BYK-files\\";
 
-    public static void writeToFile(List<byte[]> rawData, int slot) {
+    public static File writeToFile(List<byte[]> rawData, int slot, int fileNumber) {
         try {
-            final File file = new File(DIR + String.format("%s_%d.byte", String.valueOf(System.currentTimeMillis()), slot));
+            final File file = new File(DIR + String.format("%d_%s_%d.byte", fileNumber, String.valueOf(System.currentTimeMillis()), slot));
             final FileOutputStream out = new FileOutputStream(file);
             for (final byte[] b : rawData) {
                 final String base64Str = new String(Base64.getEncoder().encode(b));
@@ -20,9 +19,11 @@ public class FileManager {
             }
             out.flush();
             out.close();
+            return file;
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return null;
     }
 
     public static List<byte[]> redFile(final File file) {
