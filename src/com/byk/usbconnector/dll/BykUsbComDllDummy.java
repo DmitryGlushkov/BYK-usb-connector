@@ -23,12 +23,7 @@ public class BykUsbComDllDummy implements BykUsbComDll {
     }
 
     @Override
-    public long BYKCom_FmtCommand(int handler, byte[] cmd, int cmdLen, byte[] result, int maxResult, int[] written) {
-        return 0;
-    }
-
-    @Override
-    public long BYKCom_RawCommand(int handler, byte[] cmd, int cmdLen, byte[] result, int maxResult, int[] written) {
+    public long BYKCom_FmtCommand(int handler, int[] cmd, int cmdLen, byte[] result, int maxResult, int[] written) {
         return 0;
     }
 

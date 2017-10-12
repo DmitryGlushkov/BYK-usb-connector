@@ -10,6 +10,7 @@ import java.util.List;
 public class Connector {
 
     private static BykUsbComDll DLL;
+    private static int RAW = 0, FORMATTED = 1;
 
     static {
         try {
@@ -40,20 +41,32 @@ public class Connector {
         return null;
     }
 
-    public static List<byte[]> readDataFromSlot(final int slotNumber) {
+    public static List<byte[]> readDataFromSlot_raw(final int slotNumber) {
+        return readDataFromSlot(slotNumber, RAW);
+    }
+
+    public static List<byte[]> readDataFromSlot_fmt(final int slotNumber) {
+        return readDataFromSlot(slotNumber, FORMATTED);
+    }
+
+    private static List<byte[]> readDataFromSlot(final int slotNumber, final int type) {
         final List<byte[]> result = new ArrayList<>(3);
         for (final int command : ByteProtocol.getCommandsForSlot(slotNumber)) {
-            result.add(execRawCommand(command));
+            result.add(execCommand(command, type));
         }
         return result;
     }
 
-    private static byte[] execRawCommand(int command) {
+    private static byte[] execCommand(int command, int type) {
         int[] written = new int[1];
         int maxResult = 2000;
         byte[] res_b = new byte[maxResult];
         int[] cmd = new int[]{command, 0};
-        DLL.BYKCom_RawCommand(HANDLER, cmd, 5, res_b, maxResult, written);
+        if (type == RAW) {
+            DLL.BYKCom_RawCommand(HANDLER, cmd, 5, res_b, maxResult, written);
+        } else if (type == FORMATTED) {
+            DLL.BYKCom_FmtCommand(HANDLER, cmd, 5, res_b, maxResult, written);
+        }
         return Arrays.copyOf(res_b, written[0]);
     }
 

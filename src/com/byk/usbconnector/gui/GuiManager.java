@@ -16,18 +16,20 @@ import java.util.List;
 public class GuiManager {
 
     private ResourceBundle labels = ResourceBundle.getBundle("resources/labels");
+    private Dimension panelSize = new Dimension(400, 310);
     private Device device = null;
     private JButton btnConnect, btnGetData;
     private JLabel lblLoad;
     private JTextField txtSlot;
     private FileNameListModel listModel;
     private JList<String> fileList;
+    private String selectedCmdType; // raw or fmt
 
     public void show() {
 
         final JFrame frame = new JFrame(labels.getString("title"));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setPreferredSize(new Dimension(400, 250));
+        frame.setPreferredSize(panelSize);
         frame.setResizable(false);
         frame.addWindowListener(new WindowAdapter() {
             @Override
@@ -106,6 +108,23 @@ public class GuiManager {
         c.gridy++;
         leftContainer.add(btnContainer, c);
 
+        // radio buttons: raw/formatted
+        ActionListener radioBtnListener = e -> selectedCmdType = e.getActionCommand();
+        JRadioButton btnRaw = new JRadioButton("raw data");
+        JRadioButton btnFmt = new JRadioButton("formatted data");
+        btnRaw.setActionCommand("raw");
+        btnFmt.setActionCommand("fmt");
+        btnRaw.addActionListener(radioBtnListener);
+        btnFmt.addActionListener(radioBtnListener);
+        btnFmt.setSelected(true); selectedCmdType = "fmt";
+
+        ButtonGroup group = new ButtonGroup();
+        group.add(btnRaw);
+        group.add(btnFmt);
+        c.gridy++; leftContainer.add(btnRaw, c);
+        c.gridy++; leftContainer.add(btnFmt, c);
+
+
         // label "Files"
         JLabel lblFiles = new JLabel("Files:");
         c.gridx = 1;
@@ -118,10 +137,17 @@ public class GuiManager {
         fileList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if(e.getClickCount() == 2){
+                if (e.getClickCount() == 2) {
                     final File file = listModel.getFile(fileList.getSelectedIndex());
                     final List<byte[]> byteList = FileManager.redFile(file);
-                    ByteProcessor.process___1(byteList);
+                    switch (file.getName().substring(0, 1)) {
+                        case "R":
+                            ByteProcessor.process_raw(byteList);
+                            break;
+                        case "F":
+                            ByteProcessor.process_fmt(byteList);
+                            break;
+                    }
                 }
             }
         });
@@ -214,13 +240,25 @@ public class GuiManager {
                     if (text.length() > 0 && text.matches("\\d")) {
                         int slot = Integer.parseInt(text);
                         if (slot >= 1 && slot <= 10) {
-                            List<byte[]> rawData = Connector.readDataFromSlot(slot);
-                            File file = FileManager.writeToFile(rawData, slot, listModel.size());
-                            JOptionPane.showMessageDialog(btnConnect.getParent(), String.format("Файл создан: %s", file.getName()));
-                            listModel.addFile(file);
-                            int index = listModel.size()-1;
-                            fileList.setSelectedIndex(index);
-                            fileList.ensureIndexIsVisible(index);
+                            List<byte[]> rawData = null;
+                            String litera = null;
+                            if (selectedCmdType.equals("raw")) {
+                                rawData = Connector.readDataFromSlot_raw(slot);
+                                litera = "R";
+                            } else if (selectedCmdType.equals("fmt")) {
+                                rawData = Connector.readDataFromSlot_fmt(slot);
+                                litera = "F";
+                            }
+                            if (rawData != null) {
+                                File file = FileManager.writeToFile(rawData, slot, listModel.getSize(), litera);
+                                JOptionPane.showMessageDialog(btnConnect.getParent(), String.format("Файл создан: %s", file.getName()));
+                                listModel.addFile(file);
+                                int index = listModel.size() - 1;
+                                fileList.setSelectedIndex(index);
+                                fileList.ensureIndexIsVisible(index);
+                            } else {
+                                JOptionPane.showMessageDialog(btnConnect.getParent(), "Ошибка чтения данных");
+                            }
                         } else {
                             JOptionPane.showMessageDialog(btnConnect.getParent(), "Неверный номер слота (1-10)");
                         }

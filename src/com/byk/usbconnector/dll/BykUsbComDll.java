@@ -12,9 +12,7 @@ public interface BykUsbComDll  extends Library {
 
     long BYKCom_Close(int handler);
 
-    long BYKCom_FmtCommand(int handler, byte[] cmd, int cmdLen, byte[] result, int maxResult, int[] written);
-
-    long BYKCom_RawCommand(int handler, byte[] cmd, int cmdLen, byte[] result, int maxResult, int[] written);
+    long BYKCom_FmtCommand(int handler, int[] cmd, int cmdLen, byte[] result, int maxResult, int[] written);
 
     long BYKCom_RawCommand(int handler, int[] cmd, int cmdLen, byte[] result, int maxResult, int[] written);
 

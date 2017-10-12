@@ -8,9 +8,9 @@ public class FileManager {
 
     private static final String DIR = "G:\\BYK-files\\";
 
-    public static File writeToFile(List<byte[]> rawData, int slot, int fileNumber) {
+    public static File writeToFile(List<byte[]> rawData, int slot, int fileNumber, final String fileNameLitera) {
         try {
-            final File file = new File(DIR + String.format("%d_%s_%d.byte", fileNumber, String.valueOf(System.currentTimeMillis()), slot));
+            final File file = new File(DIR + String.format("%s%d_%s_%d.byte", fileNameLitera, fileNumber, String.valueOf(System.currentTimeMillis()), slot));
             final FileOutputStream out = new FileOutputStream(file);
             for (final byte[] b : rawData) {
                 final String base64Str = new String(Base64.getEncoder().encode(b));

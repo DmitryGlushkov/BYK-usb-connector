@@ -12,7 +12,7 @@ public class ByteProcessor {
     static final int START_WAVE = 400;  // (nm)
     static final int STEP_WAVE = 10;    // (nm)
 
-    public static void process___1(List<byte[]> byteList) {
+    public static void process_raw(List<byte[]> byteList) {
 
 
         // setup waves
@@ -55,6 +55,18 @@ public class ByteProcessor {
             f__ar[i] = ByteBuffer.wrap(split.get(i)).order(ByteOrder.LITTLE_ENDIAN).getFloat();
         }
         return f__ar;
+    }
+
+    public static void process_fmt(List<byte[]> byteList) {
+
+        String line;
+        for (final byte[] bb : byteList) {
+            line = new String(bb);
+            String[] split = line.split("\t");
+            System.out.println();
+        }
+        System.out.println();
+
     }
 
 
