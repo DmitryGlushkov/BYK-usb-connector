@@ -17,6 +17,7 @@ public class GuiManager {
 
     private ResourceBundle labels = ResourceBundle.getBundle("resources/labels");
     private Dimension panelSize = new Dimension(400, 310);
+    private Dimension dialogSize = new Dimension(400, 750);
     private Device device = null;
     private JButton btnConnect, btnGetData;
     private JLabel lblLoad;
@@ -24,14 +25,15 @@ public class GuiManager {
     private FileNameListModel listModel;
     private JList<String> fileList;
     private String selectedCmdType; // raw or fmt
+    private JFrame mainframe;
 
     public void show() {
 
-        final JFrame frame = new JFrame(labels.getString("title"));
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setPreferredSize(panelSize);
-        frame.setResizable(false);
-        frame.addWindowListener(new WindowAdapter() {
+        mainframe = new JFrame(labels.getString("title"));
+        mainframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        mainframe.setPreferredSize(panelSize);
+        mainframe.setResizable(false);
+        mainframe.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 disconnect();
@@ -41,13 +43,13 @@ public class GuiManager {
         final Container flowContainer = new JPanel(new FlowLayout());
         final Container mainContainer = new JPanel(new GridBagLayout());
 
-        frame.add(flowContainer, BorderLayout.WEST);
+        mainframe.add(flowContainer, BorderLayout.WEST);
         flowContainer.add(mainContainer);
 
         initWidgets(mainContainer);
 
-        frame.pack();
-        frame.setVisible(true);
+        mainframe.pack();
+        mainframe.setVisible(true);
 
         setBtnConnectState();
 
@@ -140,13 +142,19 @@ public class GuiManager {
                 if (e.getClickCount() == 2) {
                     final File file = listModel.getFile(fileList.getSelectedIndex());
                     final List<byte[]> byteList = FileManager.redFile(file);
+                    Map<Integer, float[]> waveMap = null;
                     switch (file.getName().substring(0, 1)) {
                         case "R":
-                            ByteProcessor.process_raw(byteList);
+                            waveMap = ByteProcessor.process_raw(byteList);
                             break;
                         case "F":
-                            ByteProcessor.process_fmt(byteList);
+                            waveMap = ByteProcessor.process_fmt(byteList);
                             break;
+                    }
+                    if (waveMap != null) {
+                        showWaveData(waveMap, file.getName());
+                    } else {
+                        JOptionPane.showMessageDialog(btnConnect.getParent(), "Wave-map is incorrect");
                     }
                 }
             }
@@ -276,6 +284,26 @@ public class GuiManager {
        if(! Connector.isDllLoaded()){
            JOptionPane.showMessageDialog(btnConnect.getParent(), "bykusbcom.dll не подключена");
        }
+    }
+
+    private void showWaveData(Map<Integer, float[]> waveMap, String fileName){
+        // prepare text
+        final StringBuilder builder = new StringBuilder();
+        waveMap.keySet().stream().sorted().forEach(i -> {
+            float[] _f = waveMap.get(i);
+            builder.append(String.format("%d\t%f\t%f\t%f\n", i, _f[0], _f[1], _f[2]));
+        });
+
+
+
+        final JDialog dialog = new JDialog(mainframe, fileName, false);
+        dialog.setPreferredSize(dialogSize);
+        dialog.setResizable(false);
+        final JTextArea textArea = new JTextArea(builder.toString());
+        dialog.add(textArea);
+        dialog.pack();
+        dialog.setVisible(true);
+
     }
 
 }

@@ -12,21 +12,24 @@ public class ByteProcessor {
     static final int START_WAVE = 400;  // (nm)
     static final int STEP_WAVE = 10;    // (nm)
 
-    public static void process_raw(List<byte[]> byteList) {
-
-
-        // setup waves
+    static int[] WAVE_LEN = new int[31];
+    static {
         int W = START_WAVE;
-        int[] wave_len = new int[31];
-        for (int i = 0; i < wave_len.length; i++) {
-            wave_len[i] = W; W += STEP_WAVE;
+        for (int i = 0; i < WAVE_LEN.length; i++) {
+            WAVE_LEN[i] = W; W += STEP_WAVE;
         }
+    }
 
+    private static Map<Integer, float[]> initWaveMap() {
+        final Map<Integer, float[]> map = new HashMap<>();
+        for (int len : WAVE_LEN) map.put(len, new float[3]);
+        return map;
+    }
+
+    public static Map<Integer, float[]> process_raw(List<byte[]> byteList) {
 
         // setup map
-        final Map<Integer, float[]> waveMap = new HashMap<>();
-        for (int len : wave_len) waveMap.put(len, new float[3]);
-
+        final Map<Integer, float[]> waveMap = initWaveMap();
 
         // process bytes
         for (int j = 0; j < byteList.size(); j++) {
@@ -42,11 +45,11 @@ public class ByteProcessor {
             // fill up map
             for (int i = 0; i < _floats.length; i++) {
                 float f = _floats[i];
-                waveMap.get(wave_len[i])[j] = f;
+                waveMap.get(WAVE_LEN[i])[j] = f;
             }
         }
 
-        System.out.println(1);
+        return waveMap;
     }
 
     private static float[] convertToFloat(List<byte[]> split) {
@@ -57,18 +60,22 @@ public class ByteProcessor {
         return f__ar;
     }
 
-    public static void process_fmt(List<byte[]> byteList) {
+    public static Map<Integer, float[]> process_fmt(List<byte[]> byteList) {
 
+        // setup map
+        final Map<Integer, float[]> waveMap = initWaveMap();
+
+        // process bytes
         String line;
-        for (final byte[] bb : byteList) {
-            line = new String(bb);
+        for (int i = 0; i < byteList.size(); i++) {
+            line = new String(byteList.get(i));
             String[] split = line.split("\t");
-            System.out.println();
+            for (int j = 0; j < split.length; j++) {
+                final Float f = Float.parseFloat(split[j].trim());
+                waveMap.get(WAVE_LEN[j])[i] = f;
+            }
         }
-        System.out.println();
-
+        return waveMap;
     }
-
-
 
 }
