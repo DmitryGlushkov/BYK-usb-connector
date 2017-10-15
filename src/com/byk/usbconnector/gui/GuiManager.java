@@ -15,6 +15,12 @@ import java.util.List;
 
 public class GuiManager {
 
+    private static final String
+            ACTION_GET_DATA = "get_data",
+            ACTION_CONNECT = "connect",
+            ACTION_RAW = "raw",
+            ACTION_FORMAT = "fmt";
+
     private ResourceBundle labels = ResourceBundle.getBundle("resources/labels");
     private Dimension panelSize = new Dimension(400, 310);
     private Dimension dialogSize = new Dimension(400, 750);
@@ -80,14 +86,14 @@ public class GuiManager {
         container.add(rightContainer, c);
 
         // label
-        lblLoad = new JLabel("Deviсe:");
+        lblLoad = new JLabel(_l("lbl_device"));
         c.gridx = 0;
         c.gridy = 0;
         leftContainer.add(lblLoad, c);
 
         // btn. Load
-        btnConnect = new JButton("Connect");
-        btnConnect.setActionCommand("connect");
+        btnConnect = new JButton(_l("btn_connect"));
+        btnConnect.setActionCommand(ACTION_CONNECT);
         btnConnect.addActionListener(buttonListener);
         c.gridy++;
         leftContainer.add(btnConnect, c);
@@ -99,8 +105,8 @@ public class GuiManager {
 
         // btn. GetData
         JPanel btnContainer = new JPanel(new FlowLayout());
-        btnGetData = new JButton("Get Data");
-        btnGetData.setActionCommand("get_data");
+        btnGetData = new JButton(_l("btn_get_data"));
+        btnGetData.setActionCommand(ACTION_GET_DATA);
         btnGetData.addActionListener(buttonListener);
         btnContainer.add(btnGetData);
 
@@ -112,13 +118,13 @@ public class GuiManager {
 
         // radio buttons: raw/formatted
         ActionListener radioBtnListener = e -> selectedCmdType = e.getActionCommand();
-        JRadioButton btnRaw = new JRadioButton("raw data");
-        JRadioButton btnFmt = new JRadioButton("formatted data");
-        btnRaw.setActionCommand("raw");
-        btnFmt.setActionCommand("fmt");
+        JRadioButton btnRaw = new JRadioButton(_l("btn_raw_data"));
+        JRadioButton btnFmt = new JRadioButton(_l("btn_fmt_data"));
+        btnRaw.setActionCommand(ACTION_RAW);
+        btnFmt.setActionCommand(ACTION_FORMAT);
         btnRaw.addActionListener(radioBtnListener);
         btnFmt.addActionListener(radioBtnListener);
-        btnFmt.setSelected(true); selectedCmdType = "fmt";
+        btnFmt.setSelected(true); selectedCmdType = ACTION_FORMAT;
 
         ButtonGroup group = new ButtonGroup();
         group.add(btnRaw);
@@ -128,7 +134,7 @@ public class GuiManager {
 
 
         // label "Files"
-        JLabel lblFiles = new JLabel("Files:");
+        JLabel lblFiles = new JLabel(_l("lbl_files"));
         c.gridx = 1;
         c.gridy = 0;
         rightContainer.add(lblFiles, c);
@@ -154,13 +160,13 @@ public class GuiManager {
                     if (waveMap != null) {
                         showWaveData(waveMap, file.getName());
                     } else {
-                        JOptionPane.showMessageDialog(btnConnect.getParent(), "Wave-map is incorrect");
+                        JOptionPane.showMessageDialog(btnConnect.getParent(), _l("msg_wavemap_incorrect"));
                     }
                 }
             }
         });
 
-        listScroller = new JScrollPane(fileList);
+        JScrollPane listScroller = new JScrollPane(fileList);
 
         c.gridy++;
         rightContainer.add(listScroller, c);
@@ -169,10 +175,12 @@ public class GuiManager {
 
     }
 
-    JScrollPane listScroller;
+    private String _l(final String tag){
+        return labels.getString(tag);
+    }
 
     private void setBtnConnectState() {
-        lblLoad.setText(String.format("Device: %s", (Connector.isConnected() ? "connected" : "disconnected")));
+        lblLoad.setText(Connector.isConnected() ? _l("lbl_device_con") : _l("lbl_device_discon"));
         btnConnect.setEnabled(!Connector.isConnected());
         btnGetData.setEnabled(Connector.isConnected());
         txtSlot.setEnabled(Connector.isConnected());
@@ -232,17 +240,17 @@ public class GuiManager {
 
     private ActionListener buttonListener = e -> {
         switch (e.getActionCommand()) {
-            case "connect":
+            case ACTION_CONNECT:
                 device = Connector.getDevice();
                 if (device != null) {
                     Connector.open(device);
                     tableModel.fireTableDataChanged();
                 } else {
-                    JOptionPane.showMessageDialog(btnConnect.getParent(), "Нет подключенных устройств");
+                    JOptionPane.showMessageDialog(btnConnect.getParent(), _l("msg_no_devices"));
                 }
                 setBtnConnectState();
                 break;
-            case "get_data":
+            case ACTION_GET_DATA:
                 if (Connector.isConnected() && device != null) {
                     final String text = txtSlot.getText().trim();
                     if (text.length() > 0 && text.matches("\\d")) {
@@ -250,10 +258,10 @@ public class GuiManager {
                         if (slot >= 1 && slot <= 10) {
                             List<byte[]> rawData = null;
                             String litera = null;
-                            if (selectedCmdType.equals("raw")) {
+                            if (selectedCmdType.equals(ACTION_RAW)) {
                                 rawData = Connector.readDataFromSlot_raw(slot);
                                 litera = "R";
-                            } else if (selectedCmdType.equals("fmt")) {
+                            } else if (selectedCmdType.equals(ACTION_FORMAT)) {
                                 rawData = Connector.readDataFromSlot_fmt(slot);
                                 litera = "F";
                             }
@@ -265,16 +273,16 @@ public class GuiManager {
                                 fileList.setSelectedIndex(index);
                                 fileList.ensureIndexIsVisible(index);
                             } else {
-                                JOptionPane.showMessageDialog(btnConnect.getParent(), "Ошибка чтения данных");
+                                JOptionPane.showMessageDialog(btnConnect.getParent(), _l("msg_read_fail"));
                             }
                         } else {
-                            JOptionPane.showMessageDialog(btnConnect.getParent(), "Неверный номер слота (1-10)");
+                            JOptionPane.showMessageDialog(btnConnect.getParent(), _l("msg_wring_slot"));
                         }
                     } else {
-                        JOptionPane.showMessageDialog(btnConnect.getParent(), "Неверный номер слота (1-10)");
+                        JOptionPane.showMessageDialog(btnConnect.getParent(), _l("msg_wring_slot"));
                     }
                 } else {
-                    JOptionPane.showMessageDialog(btnConnect.getParent(), "Нет подключенных устройств");
+                    JOptionPane.showMessageDialog(btnConnect.getParent(), _l("msg_no_devices"));
                 }
                 break;
         }
@@ -282,7 +290,7 @@ public class GuiManager {
 
     private void checkDllLoaded(){
        if(! Connector.isDllLoaded()){
-           JOptionPane.showMessageDialog(btnConnect.getParent(), "bykusbcom.dll не подключена");
+           JOptionPane.showMessageDialog(btnConnect.getParent(), _l("msg_no_dll"));
        }
     }
 
@@ -293,9 +301,7 @@ public class GuiManager {
             float[] _f = waveMap.get(i);
             builder.append(String.format("%d\t%f\t%f\t%f\n", i, _f[0], _f[1], _f[2]));
         });
-
-
-
+        // open dialog
         final JDialog dialog = new JDialog(mainframe, fileName, false);
         dialog.setPreferredSize(dialogSize);
         dialog.setResizable(false);
